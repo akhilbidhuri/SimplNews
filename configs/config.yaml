@@ -1,0 +1,41 @@
+server:
+  port: 8080
+  read_timeout: 15s
+  write_timeout: 15s
+  shutdown_timeout: 10s
+
+database:
+  host: localhost
+  port: 5432
+  name: simplnews
+  user: simplnews_user
+  max_connections: 25
+  max_idle_connections: 5
+  connection_lifetime: 300s
+
+api:
+  default_limit: 5
+  max_limit: 20
+  enable_cors: true
+
+llm:
+  summary_model: gpt-3.5-turbo-16k
+  summary_max_tokens: 150
+  summary_temperature: 0.3
+  intent_model: gpt-3.5-turbo-16k
+  intent_max_tokens: 300
+  intent_temperature: 0.1
+
+trending:
+  cache_ttl: 5m
+  default_radius_km: 100
+  default_time_window_hours: 24
+  event_weights:
+    view: 1.0
+    click: 2.0
+    share: 3.0
+
+logging:
+  level: info
+  format: json
+  output: stdout
