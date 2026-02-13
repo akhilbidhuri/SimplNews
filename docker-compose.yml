@@ -17,5 +17,36 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: simplnews-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: simplnews
+      DATABASE_USER: simplnews_user
+      DATABASE_PASSWORD: changeme123
+      SERVER_PORT: 8080
+      LOG_LEVEL: info
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LLM_SUMMARY_MODEL: gpt-3.5-turbo-16k
+      LLM_INTENT_MODEL: gpt-3.5-turbo-16k
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./configs:/app/configs
+      - ./migrations:/app/migrations
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
 volumes:
   pgdata:
