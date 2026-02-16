@@ -59,3 +59,8 @@ func New(level string) (*Logger, error) {
 func (l *Logger) Close() error {
 	return l.Sync()
 }
+
+// Desugar returns the underlying zap.Logger
+func (l *Logger) Desugar() *zap.Logger {
+	return l.SugaredLogger.Desugar()
+}

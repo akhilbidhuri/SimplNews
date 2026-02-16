@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -133,14 +134,21 @@ func Load() (*Config, error) {
 		},
 	}
 
-	if cfg.LLM.OpenAIAPIKey == "" {
-		return nil, fmt.Errorf("OPENAI_API_KEY environment variable is required")
-	}
+	// Note: OpenAI API key validation removed to allow data loading without LLM
+	// This will be required when actually using LLM features
+	// if cfg.LLM.OpenAIAPIKey == "" {
+	// 	return nil, fmt.Errorf("OPENAI_API_KEY environment variable is required")
+	// }
 
 	return cfg, nil
 }
 
 func getStringEnv(key, defaultValue string) string {
+	// Check os.Getenv first (for .env file loaded by godotenv)
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	// Then check viper (for config file or prefixed env vars)
 	if val := viper.GetString(key); val != "" {
 		return val
 	}

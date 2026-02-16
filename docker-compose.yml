@@ -25,6 +25,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
@@ -33,7 +35,6 @@ services:
       DATABASE_PASSWORD: changeme123
       SERVER_PORT: 8080
       LOG_LEVEL: info
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
       LLM_SUMMARY_MODEL: gpt-3.5-turbo-16k
       LLM_INTENT_MODEL: gpt-3.5-turbo-16k
     ports:
