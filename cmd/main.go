@@ -8,6 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/akhilbidhuri/SimplNews/internal/api"
+	"github.com/akhilbidhuri/SimplNews/internal/api/handlers"
+	"github.com/akhilbidhuri/SimplNews/internal/domain/services"
 	"github.com/akhilbidhuri/SimplNews/internal/pkg/config"
 	"github.com/akhilbidhuri/SimplNews/internal/pkg/logger"
 	"github.com/akhilbidhuri/SimplNews/internal/repository/postgres"
@@ -44,18 +47,37 @@ func main() {
 
 	log.Infow("Connected to PostgreSQL", "database", cfg.Database.Name)
 
-	// TODO: Initialize repositories, services, handlers, and HTTP server
-	// For now, just start a simple health check server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"status":"ok","message":"SimplNews API is running"}`)
-	})
+	// Initialize repositories
+	articleRepo := postgres.NewArticleRepository(db)
+
+	// Initialize services
+	llmService := services.NewLLMService(cfg.LLM.OpenAIAPIKey, cfg.LLM.IntentModel)
+	queryService := services.NewQueryService(articleRepo, llmService)
+
+	// Initialize handlers
+	zapLogger := log.Desugar()
+	queryHandler := handlers.NewQueryHandler(queryService, zapLogger)
+	categoryHandler := handlers.NewCategoryHandler(articleRepo, zapLogger)
+	scoreHandler := handlers.NewScoreHandler(articleRepo, zapLogger)
+	searchHandler := handlers.NewSearchHandler(articleRepo, zapLogger)
+	sourceHandler := handlers.NewSourceHandler(articleRepo, zapLogger)
+	nearbyHandler := handlers.NewNearbyHandler(articleRepo, zapLogger)
+
+	// Initialize HTTP server
+	apiServer := api.NewServer(cfg.Server.Port, zapLogger)
+	api.SetupRoutes(
+		apiServer.Router(),
+		queryHandler,
+		categoryHandler,
+		scoreHandler,
+		searchHandler,
+		sourceHandler,
+		nearbyHandler,
+	)
 
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%d", cfg.Server.Port),
-		Handler:        mux,
+		Handler:        apiServer.Router(),
 		ReadTimeout:    cfg.Server.ReadTimeout,
 		WriteTimeout:   cfg.Server.WriteTimeout,
 	}
